@@ -2,7 +2,7 @@
  * @Author: 娄松 
  * @Date: 2024-12-02 15:17:21
  * @LastEditors: 娄松 
- * @LastEditTime: 2024-12-05 17:00:56
+ * @LastEditTime: 2024-12-05 17:29:47
  * @FilePath: \mofang\src\App.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -20,7 +20,9 @@ function Box(props) {
   const {camera, scene} = useThree()
 
   const [position, setPosition] = useState(props.position)
+  const [prevPosition, setPrevPosition] = useState(props.position)
   const [rotateAngle, setRotateAngel] = useState([0,0,0])
+  const [prevRotateAngle, setPrevRotateAngel] = useState([0,0,0])
 
   const handleClick = (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -34,7 +36,7 @@ function Box(props) {
       // intersects[0].object.material=[{color: 0x000000}]
 
       // const axis = ['x','y','z'][Math.floor(Math.random()*9999999)%3]
-      const axis = 'z'
+      const axis = 'x'
       
       props.handleAction({
         axis,
@@ -49,37 +51,67 @@ function Box(props) {
     changeClick(!clicked)
   }
 
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  useFrame(() => {
+    if(isAnimating && ref.current) {
+      debugger
+      const currentPosition= ref.current.position
+      const {x,y,z} = currentPosition
+      if(props.axis === 'x') {
+        const initial = ref.current.rotation.x
+        if(initial>Math.PI/2) {
+          setIsAnimating(false)
+          return
+        }
+        ref.current.rotation.x += 0.01
+        ref.current.position.set(x,Math.cos(initial+0.01)*x-Math.sin(initial+0.01)*y,Math.sin(initial+0.01)*x+Math.cos(initial+0.01)*y)
+      } else if(props.axis === 'y') {
+
+      } else if(props.axis === 'z') {
+
+      }
+    }
+  })
+
   useEffect(() => {
     const currentPosition= ref.current.position
     const {x,y,z} = currentPosition
     if(props.axis && currentPosition[props.axis] === props.value && ref.current) {
       if(props.axis === 'x') {
-        setPosition([x,-z,y])
-        setRotateAngel([-Math.PI/2,0, 0])
+        // setPosition([x,-z,y])
+        // setRotateAngel([-Math.PI/2,0, 0])
+        // ref.current.position.set(x,-z,y)
+        // ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), Math.PI /2)
+        setIsAnimating(true)
       } else if(props.axis === 'y') {
-        setPosition([-z,y,x])
-        setRotateAngel([0, -Math.PI/2, 0])
+        // setPosition([-z,y,x])
+        // setRotateAngel([0, -Math.PI/2, 0])
+        // ref.current.position.set(-z,y,x)
+        // ref.current.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -Math.PI /2)
 
       } else if(props.axis === 'z') {
-        setPosition([-y,x,z])
-        setRotateAngel([0, 0, Math.PI/2])
-        ref.current.position.set(-y,x,z)
+        // setPosition([-y,x,z])
+        // setRotateAngel([0, 0, Math.PI/2])
+        // ref.current.position.set(-y,x,z)
+        // ref.current.rotateOnWorldAxis(new THREE.Vector3(0,0,1), Math.PI /2)
       } 
+      
     }
   }, [props.axis, props.value, props.position])
 
    // 使用 useSpring 来实现动画
-   const sprinpProps = useSpring({
-    to: {
-      rotation: rotateAngle, // 根据 rotationAngle 变量设置旋转
-      position: position, // 根据 position 变量设置位置
-    },
-    from: {
-      rotation: [0, 0, 0], // 初始旋转
-      position: props.position, // 初始位置
-    },
-    config: { duration: 1000 }, // 动画持续时间 1 秒
-  });
+  //  const sprinpProps = useSpring({
+  //   to: {
+  //     rotation: rotateAngle, // 根据 rotationAngle 变量设置旋转
+  //     position: position, // 根据 position 变量设置位置
+  //   },
+  //   from: {
+  //     rotation: [0,0,0], // 初始旋转
+  //     position: [0,0,0], // 初始位置
+  //   },
+  //   config: { duration: 1000 }, // 动画持续时间 1 秒
+  // });
 
   let materials = [
     { color: 0xff8000 }, // 正面（橙色）
@@ -123,12 +155,18 @@ function Box(props) {
 
   return (
     <>
-     <animated.mesh {...sprinpProps} ref={ref} onClick={handleClick}>
+     {/* <animated.mesh {...sprinpProps} ref={ref} onClick={handleClick}>
       <boxGeometry args={[0.9,0.9,0.9]} />
       {materials.map((material, index) => (
         <meshStandardMaterial key={index} attach={`material-${index}`} {...material} />
       ))}
-    </animated.mesh>
+    </animated.mesh> */}
+    <mesh {...props} ref={ref} onClick={handleClick}>
+      <boxGeometry args={[0.9,0.9,0.9]} />
+      {materials.map((material, index) => (
+        <meshStandardMaterial key={index} attach={`material-${index}`} {...material} />
+      ))}
+    </mesh>
     </>
    
   )

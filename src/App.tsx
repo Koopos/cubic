@@ -2,7 +2,7 @@
  * @Author: 娄松 
  * @Date: 2024-12-02 15:17:21
  * @LastEditors: 娄松 
- * @LastEditTime: 2024-12-06 15:55:39
+ * @LastEditTime: 2024-12-06 16:22:51
  * @FilePath: \mofang\src\App.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -36,7 +36,7 @@ function Box(props) {
       // intersects[0].object.material=new Array(6).fill({color: 0xffffff})
 
       const axis = ['x','z'][Math.floor(Math.random()*9999999)%2]
-      // const axis = 'x'
+      // const axis = Math.random()>0.5?'z': 'x'
       const selectedPosition = intersects[0].object.position
       const {x,y,z} = selectedPosition
       props.handleAction({
@@ -62,7 +62,7 @@ function Box(props) {
     angle = 0
   }
 
-  const speed = Math.PI / 90
+  const speed = Math.PI /90
 
   useFrame(() => {
     if(isAnimating && ref.current) {
@@ -77,7 +77,8 @@ function Box(props) {
           y * Math.cos(angle) - z * Math.sin(angle),
           y * Math.sin(angle) + z * Math.cos(angle)]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
-        ref.current.rotation.x+=(speed)
+        // ref.current.rotation.x+=(speed)
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), speed)
       } else if(props.axis === 'y') {
         if(Math.abs(angle)>Math.PI/2) {
           endAnimation()
@@ -88,7 +89,7 @@ function Box(props) {
           y,
           x * Math.sin(angle) + z * Math.cos(angle)]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
-        ref.current.rotation.y+=(speed)
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -speed)
       } else if(props.axis === 'z') {
         if(Math.abs(angle)>Math.PI/2) {
           endAnimation()
@@ -100,7 +101,7 @@ function Box(props) {
           z
          ]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
-        ref.current.rotation.z+=(speed)
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,0,1), speed)
       }
     }
   })
@@ -108,7 +109,7 @@ function Box(props) {
   useEffect(() => {
     const currentPosition= ref.current.position
     const {x,y,z} = currentPosition
-    if(props.axis && (Math.abs(currentPosition[props.axis] - props.value)<=0.0000001) && ref.current && !isAnimating) {
+    if(props.axis && (Math.abs(currentPosition[props.axis] - props.value)<=0.1) && ref.current && !isAnimating) {
       setPosition({x,y,z})
       setIsAnimating(true)
     }

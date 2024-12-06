@@ -2,7 +2,7 @@
  * @Author: 娄松 
  * @Date: 2024-12-02 15:17:21
  * @LastEditors: 娄松 
- * @LastEditTime: 2024-12-06 16:22:51
+ * @LastEditTime: 2024-12-06 17:26:28
  * @FilePath: \mofang\src\App.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -35,7 +35,7 @@ function Box(props) {
       // Toggle selection on the box when clicked
       // intersects[0].object.material=new Array(6).fill({color: 0xffffff})
 
-      const axis = ['x','z'][Math.floor(Math.random()*9999999)%2]
+      const axis = ['x','y','z'][Math.floor(Math.random()*9999999)%3]
       // const axis = Math.random()>0.5?'z': 'x'
       const selectedPosition = intersects[0].object.position
       const {x,y,z} = selectedPosition
@@ -62,16 +62,12 @@ function Box(props) {
     angle = 0
   }
 
-  const speed = Math.PI /90
+  const speed = Math.PI /20
 
   useFrame(() => {
     if(isAnimating && ref.current) {
       const {x,y,z} = position
       if(props.axis === 'x') {
-        if(angle>Math.PI/2) {
-          endAnimation()
-          return
-        }
         angle += (speed)
         const newPosition = [ x,
           y * Math.cos(angle) - z * Math.sin(angle),
@@ -79,22 +75,26 @@ function Box(props) {
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
         // ref.current.rotation.x+=(speed)
         ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), speed)
+        if(Math.abs(angle-Math.PI/2)<0.001) {
+          endAnimation()
+          return
+        }
       } else if(props.axis === 'y') {
         if(Math.abs(angle)>Math.PI/2) {
           endAnimation()
           return
         }
-        angle -= (speed)
-        const newPosition = [ x * Math.cos(angle) - z * Math.sin(angle),
+        angle += (speed)
+        const newPosition = [ x * Math.cos(angle) + z * Math.sin(angle),
           y,
-          x * Math.sin(angle) + z * Math.cos(angle)]
+          -x * Math.sin(angle) + z * Math.cos(angle)]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
-        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -speed)
-      } else if(props.axis === 'z') {
-        if(Math.abs(angle)>Math.PI/2) {
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,1,0), speed)
+        if(Math.abs(angle-Math.PI/2)<0.001) {
           endAnimation()
           return
         }
+      } else if(props.axis === 'z') {
         angle += (speed)
         const newPosition = [ x * Math.cos(angle) - y * Math.sin(angle),
           x * Math.sin(angle) + y * Math.cos(angle),
@@ -102,6 +102,10 @@ function Box(props) {
          ]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
         ref.current.rotateOnWorldAxis(new THREE.Vector3(0,0,1), speed)
+        if(Math.abs(angle-Math.PI/2)<0.001) {
+          endAnimation()
+          return
+        }
       }
     }
   })

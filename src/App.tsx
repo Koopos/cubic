@@ -2,7 +2,7 @@
  * @Author: 娄松 
  * @Date: 2024-12-02 15:17:21
  * @LastEditors: 娄松 
- * @LastEditTime: 2024-12-05 17:29:47
+ * @LastEditTime: 2024-12-06 14:46:06
  * @FilePath: \mofang\src\App.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -11,6 +11,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import {CameraControls, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSpring, animated } from '@react-spring/three';
+
+let angle = 0
 
 function Box(props) {
   const ref=useRef()
@@ -29,22 +31,21 @@ function Box(props) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
 
-    const intersects = raycaster.intersectObjects([ref.current]);
+    const intersects = raycaster.intersectObjects(scene.children);
     
     if (intersects.length > 0) {
       // Toggle selection on the box when clicked
-      // intersects[0].object.material=[{color: 0x000000}]
+      // intersects[0].object.material=new Array(6).fill({color: 0xffffff})
 
       // const axis = ['x','y','z'][Math.floor(Math.random()*9999999)%3]
       const axis = 'x'
-      
+      const selectedPosition = intersects[0].object.position
+      const {x,y,z} = selectedPosition
       props.handleAction({
         axis,
-        value: axis==='x'? intersects[0].normal.x :axis==='y'?intersects[0].normal.y:intersects[0].normal.z
+        value: axis==='x'? x :axis==='y'?y:z
       })
     }
-
-
 
     // 绘制射线
     // drawRay(raycaster.ray.origin, raycaster.ray.direction);
@@ -55,21 +56,43 @@ function Box(props) {
 
   useFrame(() => {
     if(isAnimating && ref.current) {
-      debugger
-      const currentPosition= ref.current.position
-      const {x,y,z} = currentPosition
+      const {x,y,z} = position
       if(props.axis === 'x') {
-        const initial = ref.current.rotation.x
-        if(initial>Math.PI/2) {
+        if(angle>Math.PI/2) {
+          setIsAnimating(false)
+          angle = 0
+          return
+        }
+        angle += (Math.PI/360)
+        const newPosition = [ x,
+          y * Math.cos(angle) - z * Math.sin(angle),
+          y * Math.sin(angle) + z * Math.cos(angle)]
+        ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
+      } else if(props.axis === 'y') {
+        if(Math.abs(angle)>Math.PI/2) {
+          setIsAnimating(false)
+          angle = 0
+          return
+        }
+        angle -= (Math.PI/180*1.5)
+        const newPosition = [ x * Math.cos(angle) - z * Math.sin(angle),
+          y,
+          x * Math.sin(angle) + z * Math.cos(angle)]
+        ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), angle)
+      } else if(props.axis === 'z') {
+        if(angle>Math.PI/2) {
+          angle = 0
           setIsAnimating(false)
           return
         }
-        ref.current.rotation.x += 0.01
-        ref.current.position.set(x,Math.cos(initial+0.01)*x-Math.sin(initial+0.01)*y,Math.sin(initial+0.01)*x+Math.cos(initial+0.01)*y)
-      } else if(props.axis === 'y') {
-
-      } else if(props.axis === 'z') {
-
+        angle += (Math.PI/180*1.5)
+        const newPosition = [ x * Math.cos(angle) - y * Math.sin(angle),
+          x * Math.sin(angle) + y * Math.cos(angle),
+          z
+         ]
+        ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), angle)
       }
     }
   })
@@ -77,24 +100,26 @@ function Box(props) {
   useEffect(() => {
     const currentPosition= ref.current.position
     const {x,y,z} = currentPosition
-    if(props.axis && currentPosition[props.axis] === props.value && ref.current) {
+    if(props.axis && currentPosition[props.axis] === props.value && ref.current && !isAnimating) {
+      // setIsAnimating(true)
+      // setPosition({x,y,z})
       if(props.axis === 'x') {
         // setPosition([x,-z,y])
         // setRotateAngel([-Math.PI/2,0, 0])
         // ref.current.position.set(x,-z,y)
-        // ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), Math.PI /2)
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), Math.PI /2)
         setIsAnimating(true)
       } else if(props.axis === 'y') {
         // setPosition([-z,y,x])
         // setRotateAngel([0, -Math.PI/2, 0])
-        // ref.current.position.set(-z,y,x)
-        // ref.current.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -Math.PI /2)
+        ref.current.position.set(-z,y,x)
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -Math.PI /2)
 
       } else if(props.axis === 'z') {
         // setPosition([-y,x,z])
         // setRotateAngel([0, 0, Math.PI/2])
-        // ref.current.position.set(-y,x,z)
-        // ref.current.rotateOnWorldAxis(new THREE.Vector3(0,0,1), Math.PI /2)
+        ref.current.position.set(-y,x,z)
+        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,0,1), Math.PI /2)
       } 
       
     }
@@ -227,9 +252,9 @@ function App() {
     setValue(value)
 
     setTimeout(() => {
-      setAxis(0)
-      setValue(0)
-    }, 1200)
+      setAxis('')
+      setValue('')
+    }, 12000)
   }
 
   return (

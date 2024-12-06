@@ -2,7 +2,7 @@
  * @Author: 娄松 
  * @Date: 2024-12-02 15:17:21
  * @LastEditors: 娄松 
- * @LastEditTime: 2024-12-06 14:46:06
+ * @LastEditTime: 2024-12-06 15:55:39
  * @FilePath: \mofang\src\App.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -10,9 +10,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import {CameraControls, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
-import { useSpring, animated } from '@react-spring/three';
 
-let angle = 0
 
 function Box(props) {
   const ref=useRef()
@@ -22,11 +20,11 @@ function Box(props) {
   const {camera, scene} = useThree()
 
   const [position, setPosition] = useState(props.position)
-  const [prevPosition, setPrevPosition] = useState(props.position)
-  const [rotateAngle, setRotateAngel] = useState([0,0,0])
-  const [prevRotateAngle, setPrevRotateAngel] = useState([0,0,0])
 
   const handleClick = (event) => {
+    if(isAnimating) {
+      return
+    }
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
@@ -37,8 +35,8 @@ function Box(props) {
       // Toggle selection on the box when clicked
       // intersects[0].object.material=new Array(6).fill({color: 0xffffff})
 
-      // const axis = ['x','y','z'][Math.floor(Math.random()*9999999)%3]
-      const axis = 'x'
+      const axis = ['x','z'][Math.floor(Math.random()*9999999)%2]
+      // const axis = 'x'
       const selectedPosition = intersects[0].object.position
       const {x,y,z} = selectedPosition
       props.handleAction({
@@ -53,46 +51,56 @@ function Box(props) {
   }
 
   const [isAnimating, setIsAnimating] = useState(false)
+  let angle = 0
+
+  const endAnimation = () => {
+    props.handleAction({
+      axis: '',
+      value: ''
+    })
+    setIsAnimating(false)
+    angle = 0
+  }
+
+  const speed = Math.PI / 90
 
   useFrame(() => {
     if(isAnimating && ref.current) {
       const {x,y,z} = position
       if(props.axis === 'x') {
         if(angle>Math.PI/2) {
-          setIsAnimating(false)
-          angle = 0
+          endAnimation()
           return
         }
-        angle += (Math.PI/360)
+        angle += (speed)
         const newPosition = [ x,
           y * Math.cos(angle) - z * Math.sin(angle),
           y * Math.sin(angle) + z * Math.cos(angle)]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
+        ref.current.rotation.x+=(speed)
       } else if(props.axis === 'y') {
         if(Math.abs(angle)>Math.PI/2) {
-          setIsAnimating(false)
-          angle = 0
+          endAnimation()
           return
         }
-        angle -= (Math.PI/180*1.5)
+        angle -= (speed)
         const newPosition = [ x * Math.cos(angle) - z * Math.sin(angle),
           y,
           x * Math.sin(angle) + z * Math.cos(angle)]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
-        ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), angle)
+        ref.current.rotation.y+=(speed)
       } else if(props.axis === 'z') {
-        if(angle>Math.PI/2) {
-          angle = 0
-          setIsAnimating(false)
+        if(Math.abs(angle)>Math.PI/2) {
+          endAnimation()
           return
         }
-        angle += (Math.PI/180*1.5)
+        angle += (speed)
         const newPosition = [ x * Math.cos(angle) - y * Math.sin(angle),
           x * Math.sin(angle) + y * Math.cos(angle),
           z
          ]
         ref.current.position.set(newPosition[0], newPosition[1], newPosition[2])
-        ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), angle)
+        ref.current.rotation.z+=(speed)
       }
     }
   })
@@ -100,32 +108,11 @@ function Box(props) {
   useEffect(() => {
     const currentPosition= ref.current.position
     const {x,y,z} = currentPosition
-    if(props.axis && currentPosition[props.axis] === props.value && ref.current && !isAnimating) {
-      // setIsAnimating(true)
-      // setPosition({x,y,z})
-      if(props.axis === 'x') {
-        // setPosition([x,-z,y])
-        // setRotateAngel([-Math.PI/2,0, 0])
-        // ref.current.position.set(x,-z,y)
-        ref.current.rotateOnWorldAxis(new THREE.Vector3(1,0,0), Math.PI /2)
-        setIsAnimating(true)
-      } else if(props.axis === 'y') {
-        // setPosition([-z,y,x])
-        // setRotateAngel([0, -Math.PI/2, 0])
-        ref.current.position.set(-z,y,x)
-        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -Math.PI /2)
-
-      } else if(props.axis === 'z') {
-        // setPosition([-y,x,z])
-        // setRotateAngel([0, 0, Math.PI/2])
-        ref.current.position.set(-y,x,z)
-        ref.current.rotateOnWorldAxis(new THREE.Vector3(0,0,1), Math.PI /2)
-      } 
-      
+    if(props.axis && (Math.abs(currentPosition[props.axis] - props.value)<=0.0000001) && ref.current && !isAnimating) {
+      setPosition({x,y,z})
+      setIsAnimating(true)
     }
   }, [props.axis, props.value, props.position])
-
-   // 使用 useSpring 来实现动画
   //  const sprinpProps = useSpring({
   //   to: {
   //     rotation: rotateAngle, // 根据 rotationAngle 变量设置旋转
@@ -180,12 +167,6 @@ function Box(props) {
 
   return (
     <>
-     {/* <animated.mesh {...sprinpProps} ref={ref} onClick={handleClick}>
-      <boxGeometry args={[0.9,0.9,0.9]} />
-      {materials.map((material, index) => (
-        <meshStandardMaterial key={index} attach={`material-${index}`} {...material} />
-      ))}
-    </animated.mesh> */}
     <mesh {...props} ref={ref} onClick={handleClick}>
       <boxGeometry args={[0.9,0.9,0.9]} />
       {materials.map((material, index) => (
@@ -250,11 +231,6 @@ function App() {
   const handleAction = ({axis, value}) => {
     setAxis(axis)
     setValue(value)
-
-    setTimeout(() => {
-      setAxis('')
-      setValue('')
-    }, 12000)
   }
 
   return (

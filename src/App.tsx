@@ -2,7 +2,7 @@
  * @Author: 娄松 
  * @Date: 2024-12-02 15:17:21
  * @LastEditors: 娄松 
- * @LastEditTime: 2024-12-06 17:26:28
+ * @LastEditTime: 2024-12-09 10:59:05
  * @FilePath: \mofang\src\App.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -193,34 +193,6 @@ for(let i=-1;i<2;i++){
   }
 }
 
-
-function LODDemo(props) {
-  const { camera } = useThree();
-  const [lodIndex, setLodIndex] = useState(0); // LOD 索引
-
-  const lod = new THREE.LOD();
-
-  const lowDetailGeometry = useMemo(() => new THREE.IcosahedronGeometry(5, 0), []);
-  const mediumDetailGeometry = useMemo(() => new THREE.IcosahedronGeometry(5, 2), []);
-  const highDetailGeometry = useMemo(() => new THREE.IcosahedronGeometry(5, 5), []);
-  const arr = [lowDetailGeometry, mediumDetailGeometry, highDetailGeometry]
-  const colors = ['orange','red', 'green']
-  for( let i = 0; i < 3; i++ ) {
-    const geometry = arr[i]
-    const mesh = new THREE.Mesh( geometry, new THREE.MeshStandardMaterial({color: colors[i]}) );
-    lod.addLevel( mesh, i * 30 );
-  }
-
-   // 根据 LOD 索引返回不同的几何体
-   const geometry = useMemo(() => {
-    if (lodIndex === 0) return lowDetailGeometry;
-    if (lodIndex === 1) return mediumDetailGeometry;
-    return highDetailGeometry;
-  }, [lodIndex, highDetailGeometry,lowDetailGeometry, mediumDetailGeometry]);
-  
-  return  <primitive object={lod} />
-}
-
 function App() {
 
   const [size, setSize] = useState({
@@ -251,7 +223,6 @@ function App() {
         {
           positionList.map(v=>(<Box key={v.join(',')} position={v} handleAction={handleAction} axis={axis} value={value} />))
         }
-        {/* <LODDemo /> */}
       </Canvas>
     </div>
   )

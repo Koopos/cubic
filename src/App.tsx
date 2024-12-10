@@ -2,18 +2,18 @@
  * @Author: 娄松 
  * @Date: 2024-12-02 15:17:21
  * @LastEditors: 娄松 
- * @LastEditTime: 2024-12-09 10:59:05
+ * @LastEditTime: 2024-12-10 13:54:37
  * @FilePath: \mofang\src\App.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import {CameraControls, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 
 
-function Box(props) {
-  const ref=useRef()
+function Box(props: any) {
+  const ref: any=useRef()
   const [clicked, changeClick] = useState(false)
   const mouse = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
@@ -21,7 +21,7 @@ function Box(props) {
 
   const [position, setPosition] = useState(props.position)
 
-  const handleClick = (event) => {
+  const handleClick = (event: any) => {
     if(isAnimating) {
       return
     }
@@ -130,7 +130,7 @@ function Box(props) {
   //   config: { duration: 1000 }, // 动画持续时间 1 秒
   // });
 
-  let materials = [
+  const materials = [
     { color: 0xff8000 }, // 正面（橙色）
     { color: 0xff0000 }, // 背面（红色）
     { color: 0x0000ff }, // 左面（蓝色）
@@ -183,7 +183,7 @@ function Box(props) {
   )
 }
 
-const positionList = []
+const positionList:Array<Array<number>> = []
 
 for(let i=-1;i<2;i++){
   for(let j=-1;j<2;j++){
@@ -195,7 +195,7 @@ for(let i=-1;i<2;i++){
 
 function App() {
 
-  const [size, setSize] = useState({
+  const [size] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
@@ -205,7 +205,7 @@ function App() {
   
 
 
-  const handleAction = ({axis, value}) => {
+  const handleAction = ({axis, value}: any) => {
     setAxis(axis)
     setValue(value)
   }
